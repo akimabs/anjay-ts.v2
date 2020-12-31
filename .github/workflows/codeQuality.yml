@@ -24,9 +24,8 @@ jobs:
             ${{ runner.os }}-node-
 
       - name: Install ci
-      - run: |
-          npm ci
+      - run: npm ci
 
       - name: Calc coverage
         run: |
-          npm run code-quality
+          npm test
