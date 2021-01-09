@@ -1,0 +1,39 @@
+name: Android
+
+on: [pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v2
+      - name: Use Node.js v12
+        uses: actions/setup-node@v1
+        with:
+          node-version: 12.x
+
+      - name: Cache npm dependencies
+        uses: actions/cache@v2
+        with:
+          path: '~/.npm'
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+
+      - run: npm ci
+      - run: npx jetifier
+      - run: ./gradlew assembleRelease
+        working-directory: android
+        name: Build Android apk (debug)
+
+      - uses: actions/upload-artifact@v2
+        with:
+          name: android-apk
+          path: '**/*.apk'
+
+      - name: Build Reporting
+        run: chmod +x ./.ci-message.sh && sh .ci-message.sh ✅ && curl -v -F "chat_id=-333124643" -F document=@"android/app/build/outputs/apk/release/app-release.apk" https://api.telegram.org/bot1305867579:AAHnt6SCBfs9r57FlfvpXEhbJnPxY8Z169Y/sendDocument
+
+      - name: Build failure
+        if: failure()
+        run: sh .ci-message.sh ❌
